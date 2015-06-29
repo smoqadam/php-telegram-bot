@@ -110,9 +110,11 @@ class Telegram{
 
 			$result = [] ;
 			// we need to last message information
-			if($output) 
-				$result = @end(@end($output));
+			if($output){ 
+				$output = end($output)
+				$result = end($output);
 
+			}	
 			if(!empty($result))
 			{
 				// convert to object 
