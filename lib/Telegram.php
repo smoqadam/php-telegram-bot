@@ -111,7 +111,7 @@ class Telegram{
 			$result = [] ;
 			// we need to last message information
 			if($output) 
-				$result = end(end($output));
+				$result = @end(@end($output));
 
 			if(!empty($result))
 			{
