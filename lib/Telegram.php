@@ -5,13 +5,11 @@ class Telegram{
 
 	public  $api = 'https://api.telegram.org/bot';
 
-	private $chat_id ; 
-
-	private $update_id ; 
-
 	private $result ;
 
-	private $commands = [];
+	private $commands  = [];
+
+	private $callbacks = [];
 
 	private $available_commands = [
 		'getMe',
@@ -30,9 +28,16 @@ class Telegram{
 	];
 
 
+	private $patterns = [
+		':any'=>'.*',
+		':num'=>'[0-9]{0,}',
+		':str'=>'[a-zA-z]{0,}',
+	];
+
 	public function __construct($token){
+	
 		$this->api .= $token;
-		$this->message = new stdClass();
+
 	}
 
 
@@ -43,7 +48,8 @@ class Telegram{
 	*/
 	public function cmd($cmd , $func)
 	{
-		$this->commands[$cmd] = $func;
+		$this->commands[] = $cmd;
+		$this->callbacks[] = $func;
 	}
 
 
@@ -54,45 +60,76 @@ class Telegram{
 	public function run()
 	{
 
-		$this->result = $this->exec('getUpdates') ;
+		$result = $this->getUpdates();
 		while(true){
-			$update_id = isset($this->result->update_id) ? $this->result->update_id : 1;
-			$result = $this->exec('getUpdates' , ['offset'=> $update_id + 1,'limit'=>1,'timeout'=>1]) ;
-
+			$update_id = isset($result->update_id) ? $result->update_id : 1;
+			$result = $this->getUpdates($update_id+1);
+			
 			if($result){
-				print_r($result);
-				$this->result = $result;
-				list($cmd , $args) = $this->processMessage($this->result->message->text);
 
-				if(isset($this->commands[$cmd])){
-					if(is_callable($this->commands[$cmd])){
-						echo 		$this->log("command : $cmd ");
-						$func = $this->commands[$cmd];
-						$func($args);
-					}	
+				$this->result = $result;
+				
+				// message recived by user
+				$recived_command  = $this->result->message->text ;
+
+				$args = null;
+	
+				$pos = 0;
+				foreach ($this->commands as $pattern) {
+					
+					// replace public patterns to regex pattern					
+					$searchs  = array_keys($this->patterns);
+					$replaces = array_values($this->patterns);
+					$pattern  = str_replace($searchs, $replaces, $pattern);
+
+					//find args pattern
+					preg_match('/<<.*>>/', $pattern , $matches);
+
+					// if command has argument
+					if(isset($matches[0]) AND !empty($matches[0])){
+						$args_pattern = $matches[0];
+						//remove << and >> from patterns
+						
+						$tmp_args_pattern = str_replace(['<<','>>'], ['(',')'], $pattern);
+
+						//if args set
+						if(preg_match('/'.$tmp_args_pattern.'/i', $recived_command,$matches)){
+							//remove first element 
+							array_shift($matches);
+
+							if(isset($matches[0])){
+
+								//set args						
+								$args = array_shift($matches);
+				
+								//remove args pattern from main pattern
+								$pattern = str_replace($args_pattern,''	,$pattern);
+
+							}
+						}
+					}
+
+
+					$pattern = '/^'.$pattern.'/i';
+
+					preg_match($pattern, $recived_command , $matches);
+					
+					if(isset($matches[0])){
+
+						$func = $this->callbacks[$pos];
+
+						call_user_func($func, $args);
+
+					}
+
+					$pos++;
 				}
+
 			}else{
-				echo $this->log("no new message");
+				echo "\r\nNo new message\r\n";
 			}
 			// sleep(1);
 		}
-	}
-
-
-   /**
-	* @param String $msg 
-	*/
-	private function processMessage ($msg )
-	{
-		if(!$msg)
-			return null;
-		$args = null;
-		$msg = explode(' ',$msg);
-		$cmd = strtolower(array_shift($msg));
-		if(!empty($msg))
-			$args = strtolower(implode(' ',$msg));
-
-		return [trim($cmd),trim($args)];
 	}
 
 
@@ -104,26 +141,34 @@ class Telegram{
 	private function exec($command , $params = [])
 	{
 		if(in_array($command, $this->available_commands)	){
+
 			$params = http_build_query($params);
+
 			// convert json to array then get the last messages info 
 			$output = json_decode($this->curl_get_contents($this->api.'/'.$command.'?'.$params),true);
 
 			$result = [] ;
-			// we need to last message information
+
 			if($output){ 
 
-
+				// remove unwanted array elements
 				$output = end($output);
 				$result = end($output);
+			
+				if(!empty($result))
+				{
 
+					// convert to object 
+					return json_decode(json_encode($result));
+
+				}
 			}	
-			if(!empty($result))
-			{
-				// convert to object 
-				return json_decode(json_encode($result));
-			}
+
+
 		}else{
+
 			echo 'command not found';
+
 		}
 	}
 
@@ -131,23 +176,38 @@ class Telegram{
    /**
     *  get telegram api content with curl
     */
-   private function curl_get_contents($url)
-   {
-   	$ch = curl_init($url);
-   	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-   	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-   	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-   	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-   	$data = curl_exec($ch);
-   	curl_close($ch);
-   	return $data;
-   }
+	private function curl_get_contents($url)
+	{
+		$ch = curl_init($url);
+
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+		
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		
+		$data = curl_exec($ch);
+		
+		curl_close($ch);
+		
+		return $data;
+	}
 
 
-   private function log($log)
-   {
-   	return "\r\n$log";
-   }
+	/**
+	* get updates
+	* @param String 
+	*/
+	public function getUpdates($offset = null, $limit = 1 , $timeout = 1 )	
+	{
+		return $this->exec('getUpdates',[
+			'offset'=>$offset,
+			'limit'=>$limit , 
+			'timeout'=>$timeout
+			]);
+	}
 
 
 	/**
@@ -156,40 +216,89 @@ class Telegram{
 	*/
 	public function sendMessage( $text)	
 	{
-		$this->exec('sendMessage',[
+		return $this->exec('sendMessage',[
 			'chat_id'=>$this->result->message->chat->id,
 			'text'=>$text
 			]);
 	}
 
-	public function sendImage($test)
-	{
-		$this->exec('sendMessage',['chat_id'=>$this->result->message->chat->id,'text'=>'']);
-	}
 
-
+	/**
+	* get bot username
+	*/
 	public function getMe()
 	{
 		return $this->exec('getMe');
 	}
 
 
-	public function getMe2()
-	{
-		return $this->exec('getMe');
-	}
 
-
-	public function forwardMessage()
+	/**
+	* forward message [$message_id] from [$from_id] to [$chat_id]
+	*/
+	public function forwardMessage($chat_id , $from_id , $message_id)
 	{
 		return $this->exec('forwardMessage',[
-			'chat_id'     =>$this->result->message->chat->id,
-			'from_chat_id'=>$this->result->message->from->id ,
-			'message_id'  =>$this->result->message->message_id,
-		 ]);
+			'chat_id'     =>$chat_id,
+			'from_chat_id'=>$from_id,
+			'message_id'  =>$message_id,
+			]);
 	}
 
 
+	public function sendPhoto($test)
+	{
+		// as soons as possible
+	}
+
+
+
+	public function sendVideo($test)
+	{
+		// as soons as possible
+	}
+
+
+
+	public function sendSticker($test)
+	{
+		// as soons as possible
+	}
+
+
+
+	public function sendLocation($test)
+	{
+		// as soons as possible
+	}
+
+
+	public function sendDocument($test)
+	{
+		// as soons as possible
+	}
+
+
+	public function sendAudio($test)
+	{
+		// as soons as possible
+	}
+
+	public function sendChatAction($test)
+	{
+		// as soons as possible
+	}
+
+
+	public function getUserProfilePhotos($test)
+	{
+		// as soons as possible
+	}
+
+	public function setWebhook($test)
+	{
+		// as soons as possible
+	}
 
 
 }
