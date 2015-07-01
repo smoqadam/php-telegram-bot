@@ -1,24 +1,20 @@
 {
     "name": "smoqadam/php-telegram-bot",
-    "type": "library",
-    "description": "a wrapper class for telegram bot api",
-    "keywords": ["bot","telegram"],
-    "homepage": "https://github.com/smoqadam/php-telegram-bot.git",
+    "description": "wrapper class for tg bot api",
     "license": "MIT",
     "authors": [
         {
-            "name": "Saeed Moqadam",
-            "email": "phpro.ir@gmail.com",
-            "homepage": "http://phpro.ir",
-            "role": "Developer"
+            "name": "Saeed",
+            "email": "phpro.ir@gmail.com"
         }
     ],
+    "minimum-stability": "dev",
     "require": {
         "php": ">=5.3.0"
     },
-	"autoload": {
-        "psr-4" : {
-            "Smoqadam\\" : "src"
+    "autoload": {
+        "psr-0": {
+            "Smoqadam": "src/"
         }
     }
 }
