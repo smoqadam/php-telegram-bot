@@ -1,5 +1,5 @@
 <?php
-require_once 'loader.php';
+require_once 'lib/Telegram.php';
 $tg = new Telegram('68777318:AAFxwqwuIrW9xZ4pi1bM3QJwrHpf1wOYbgQ');
 
 $tg->cmd('\/name:<<[a-zA-Z]{0,}>>', function ($args) use ($tg){
