@@ -2,6 +2,7 @@
 
 namespace Smoqadam;
 
+
 class Telegram{
 
 	public  $api = 'https://api.telegram.org/bot';
@@ -28,6 +29,7 @@ class Telegram{
 		'setWebhook',
 	];
 
+	private $http_client ;
 
 	private $patterns = [
 		':any'=>'.*',
@@ -143,7 +145,7 @@ class Telegram{
 	{
 		if(in_array($command, $this->available_commands)	){
 
-			// $params = http_build_query($params);
+			$params = http_build_query($params);
 
 			// convert json to array then get the last messages info 
 			$output = json_decode($this->curl_get_contents($this->api.'/'.$command , $params),true);
@@ -180,12 +182,7 @@ class Telegram{
     */
 	private function curl_get_contents($url , $params )
 	{
-	
 
-		$query_string = http_build_query($params);
-		file_put_contents('11.txt',print_r($params,true),FILE_APPEND);
-		// echo $url.' === '.$query_string;
-		
 		$ch = curl_init();
 
 		curl_setopt($ch, CURLOPT_URL, $url);
@@ -202,31 +199,10 @@ class Telegram{
 
 		$result = curl_exec($ch);
 
+		curl_close($ch);
 	
-//var_dump(curl_error($ch));
-curl_close($ch);
 		return $result;
-		// $ch = curl_init($url);
-
-		// curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		
-		// curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-		
-		// curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		
-		// curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-		
-		// if($file)
-		// {
-			
-		// 	curl_setopt($ch, CURLOPT_INFILE, $file);
-		// }
-
-		// $data = curl_exec($ch);
-		
-		// curl_close($ch);
-		
-		// return $data;
 	}
 
 
@@ -284,28 +260,35 @@ curl_close($ch);
 	{
 
 		$res =  $this->exec('sendPhoto',[
-				'chat_id'=>$chat_id , //$this->result->message->chat->id , 
-				'photo'  =>$photo
+				'chat_id'=>$chat_id , 
+				'photo'  =>'@'.$photo
 			] );
 
-		echo "\r\n RESULT PHOTO \r\n";
-		print_r($res);
-		echo "\r\n *************************** \r\n";
 		return $res;
-		// as soons as possible
+
 	}
 
 
 
-	public function sendVideo($test)
+	public function sendVideo($doc)
 	{
-		// as soons as possible
+		$res =  $this->exec('sendDocument',[
+				'chat_id'=>$chat_id , 
+				'photo'  =>'@'.$doc
+			] );
+
+		return $res;	
 	}
 
 
+	public function sendSticker($chat_id , $file)
+	{		
+		$res =  $this->exec('sendSticker',[
+				'chat_id'=>$chat_id , 
+				'photo'  =>'@'.$file
+			] );
 
-	public function sendSticker($test)
-	{
+		return $res;	
 		// as soons as possible
 	}
 

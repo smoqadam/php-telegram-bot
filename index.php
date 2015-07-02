@@ -17,12 +17,8 @@ $tg->cmd('\/number: <<:num>>' , function($args) use($tg){
 
 
 $tg->cmd('Hello',function ($args) use ($tg){
-	$image = fopen('e:\\logo.php.png', 'r');
-	// $image = file_get_contents('e:\\logo.php.png');
-    $images = json_decode(file_get_contents('http://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=' . urlencode($description) . '&rsz=8'), true)['responseData']['results'];
-    $image = fopen($images[array_rand($images)]['unescapedUrl'], 'r');
-	
-	$tg->sendPhoto($tg->result->message->chat->id , '@'.$image);
+	$image = 'logo.php.png';
+	$tg->sendSticker($tg->result->message->chat->id , $image);
 });
 
 $tg->run();
