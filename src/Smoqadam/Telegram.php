@@ -138,7 +138,7 @@ class Telegram{
 						$pos++;
 
 					}
-				}catch(Exception $e){
+				}catch(\Exception $e){
 					echo "\r\n Exception :: ".$e->getMessage();
 				}
 			}else{
@@ -236,15 +236,15 @@ class Telegram{
 	* send message
 	* @param String 
 	*/
-	public function sendMessage( $chat_id , $text , $disable_web_page_preview = false , $reply_to_message_id = null , $reply_markup = null)	
+	public function sendMessage($text  , $chat_id , $disable_web_page_preview = false , $reply_to_message_id = null , $reply_markup = null)	
 	{
 		return $this->exec('sendMessage',[
-			'chat_id'=>$chat_id,
+			'chat_id'=>($chat_id == null) ? $this->result->chat->id : $chat_id , 		
 			'text'=>$text , 
 			'disable_web_page_preview'=>$disable_web_page_preview,
 			'reply_to_message_id' =>$reply_to_message_id,
 			'reply_markup' =>$reply_markup
-			]);
+		]);
 	}
 
 
@@ -261,22 +261,23 @@ class Telegram{
 	/**
 	* forward message [$message_id] from [$from_id] to [$chat_id]
 	*/
-	public function forwardMessage($chat_id , $from_id , $message_id)
+	public function forwardMessage( $from_id ,  $message_id , $chat_id = null)
 	{
 		return $this->exec('forwardMessage',[
-			'chat_id'     =>$chat_id,
+			'chat_id'     =>($chat_id == null) ? $this->result->chat->id : $chat_id , 
 			'from_chat_id'=>$from_id,
 			'message_id'  =>$message_id,
 			]);
 	}
 
 
-	public function sendPhoto($chat_id , $photo , $caption = null , $reply_to_message_id = null , $reply_markup = null)
+	public function sendPhoto($photo , $chat_id = null , $caption = null , $reply_to_message_id = null , $reply_markup = null)
 	{
 
 		$res =  $this->exec('sendPhoto',[
-			'chat_id'			 =>$chat_id , 
+			'chat_id'			 =>($chat_id == null) ? $this->result->chat->id : $chat_id , 
 			'photo'  			 =>'@'.$photo ,
+			'caption'	=>$caption ,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
 			] );
@@ -287,10 +288,10 @@ class Telegram{
 
 
 
-	public function sendVideo($chat_id , $video , $reply_to_message_id = null , $reply_markup = null )
+	public function sendVideo($video , $chat_id=null , $reply_to_message_id = null , $reply_markup = null )
 	{
 		$res =  $this->exec('sendVideo',[
-			'chat_id'=>$chat_id , 
+			'chat_id'=>($chat_id == null) ? $this->result->chat->id : $chat_id , 
 			'video'  =>'@'.$video,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
@@ -300,10 +301,10 @@ class Telegram{
 	}
 
 
-	public function sendSticker($chat_id , $sticker , $reply_to_message_id = null , $reply_markup = null )
+	public function sendSticker( $sticker ,$chat_id = null , $reply_to_message_id = null , $reply_markup = null )
 	{		
 		$res =  $this->exec('sendSticker',[
-			'chat_id'=>$chat_id , 
+			'chat_id'=> ($chat_id == null) ? $this->result->chat->id : $chat_id ,
 			'sticker'  =>'@'.$sticker,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
@@ -315,10 +316,10 @@ class Telegram{
 
 
 
-	public function sendLocation($chat_id , $latitude , $longitude , $reply_to_message_id = null , $reply_markup = null )
+	public function sendLocation($latitude , $longitude , $chat_id = null ,  $reply_to_message_id = null , $reply_markup = null )
 	{
 		$res =  $this->exec('sendLocation',[
-			'chat_id'=>$chat_id , 
+			'chat_id'=>($chat_id == null) ? $this->result->chat->id : $chat_id , 
 			'latitude'  => $latitude,
 			'longitude' =>$longitude,
 			'reply_to_message_id'=>$reply_to_message_id,
@@ -329,10 +330,10 @@ class Telegram{
 	}
 
 
-	public function sendDocument($chat_id , $document , $reply_to_message_id = null , $reply_markup = null )
+	public function sendDocument( $document ,$chat_id = null , $reply_to_message_id = null , $reply_markup = null )
 	{		
 		$res =  $this->exec('sendDocument',[
-			'chat_id'=>$chat_id , 
+			'chat_id'=>($chat_id == null) ? $this->result->chat->id : $chat_id , 
 			'document'  =>'@'.$document,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
@@ -341,10 +342,10 @@ class Telegram{
 		return $res;	
 	}
 
-	public function sendAudio($chat_id , $audio , $reply_to_message_id = null , $reply_markup = null )
+	public function sendAudio( $audio , $chat_id = null ,$reply_to_message_id = null , $reply_markup = null )
 	{		
-		$res =  $this->exec('sendDocument',[
-			'chat_id'=>$chat_id , 
+		$res =  $this->exec('sendAudio',[
+			'chat_id'=>($chat_id == null) ? $this->result->chat->id : $chat_id ,  
 			'audio'  =>'@'.$audio,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
@@ -353,10 +354,10 @@ class Telegram{
 		return $res;	
 	}
 
-	public function sendChatAction($chat_id , $action)
+	public function sendChatAction( $action , $chat_id = null )
 	{
 		$res =  $this->exec('sendChatAction',[
-			'chat_id' => $chat_id , 
+			'chat_id' => ($chat_id == null) ? $this->result->chat->id : $chat_id , 
 			'action'  => $action
 			] );
 
