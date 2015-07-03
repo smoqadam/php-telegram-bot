@@ -3,8 +3,6 @@ a wrapper class for telegram bot api
 
 #this class has not been compeleted yet!!
 
-how to use :
-
 ## install 
 create composer.json :
 ```
@@ -16,6 +14,9 @@ create composer.json :
 ```
 then `composer install`
 
+
+## how to use :
+
 ```php
 <?php
 
@@ -25,12 +26,12 @@ use Smoqadam\Telegram;
 $tg = new Telegram('TELEGRAM_API_TOKEN');
 
 $tg->cmd('\/number: <<:num>>' , function($args) use($tg){
-	$tg->sendMessage("your number is : ".$args); 
+	$tg->sendMessage($tg->result->message->chat->id ,"your number is : ".$args); 
 });
 
 
 $tg->cmd('Hello',function ($args) use ($tg){
-	$tg->sendMessage("Hello World!");
+	$tg->sendMessage($tg->result->message->chat->id , "Hello World!");
 });
 
 $tg->run();
