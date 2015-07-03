@@ -159,12 +159,9 @@ class Telegram{
 	{
 		if(in_array($command, $this->available_commands)	){
 
-			$params = http_build_query($params);
 
 			// convert json to array then get the last messages info 
 			$output = json_decode($this->curl_get_contents($this->api.'/'.$command , $params),true);
-
-			$result = [] ;
 
 			if($output['ok']){ 
 
@@ -217,6 +214,12 @@ class Telegram{
 
    }
 
+	public function getChatId($chat_id = null){
+		if($chat_id)
+			return $chat_id;
+		
+		return $this->result->message->chat->id;	
+	}
 
 	/**
 	* get updates
@@ -239,7 +242,7 @@ class Telegram{
 	public function sendMessage($text  , $chat_id , $disable_web_page_preview = false , $reply_to_message_id = null , $reply_markup = null)	
 	{
 		return $this->exec('sendMessage',[
-			'chat_id'=>($chat_id == null) ? $this->result->chat->id : $chat_id , 		
+			'chat_id'=>$this->getChatId($chat_id) , 		
 			'text'=>$text , 
 			'disable_web_page_preview'=>$disable_web_page_preview,
 			'reply_to_message_id' =>$reply_to_message_id,
@@ -264,7 +267,7 @@ class Telegram{
 	public function forwardMessage( $from_id ,  $message_id , $chat_id = null)
 	{
 		return $this->exec('forwardMessage',[
-			'chat_id'     =>($chat_id == null) ? $this->result->chat->id : $chat_id , 
+			'chat_id'     =>$this->getChatId($chat_id) , 
 			'from_chat_id'=>$from_id,
 			'message_id'  =>$message_id,
 			]);
@@ -275,7 +278,7 @@ class Telegram{
 	{
 
 		$res =  $this->exec('sendPhoto',[
-			'chat_id'			 =>($chat_id == null) ? $this->result->chat->id : $chat_id , 
+			'chat_id'			 =>$this->getChatId($chat_id) , 
 			'photo'  			 =>'@'.$photo ,
 			'caption'	=>$caption ,
 			'reply_to_message_id'=>$reply_to_message_id,
@@ -291,7 +294,7 @@ class Telegram{
 	public function sendVideo($video , $chat_id=null , $reply_to_message_id = null , $reply_markup = null )
 	{
 		$res =  $this->exec('sendVideo',[
-			'chat_id'=>($chat_id == null) ? $this->result->chat->id : $chat_id , 
+			'chat_id'=>$this->getChatId($chat_id) , 
 			'video'  =>'@'.$video,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
@@ -304,7 +307,7 @@ class Telegram{
 	public function sendSticker( $sticker ,$chat_id = null , $reply_to_message_id = null , $reply_markup = null )
 	{		
 		$res =  $this->exec('sendSticker',[
-			'chat_id'=> ($chat_id == null) ? $this->result->chat->id : $chat_id ,
+			'chat_id'=> $this->getChatId($chat_id) ,
 			'sticker'  =>'@'.$sticker,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
@@ -319,7 +322,7 @@ class Telegram{
 	public function sendLocation($latitude , $longitude , $chat_id = null ,  $reply_to_message_id = null , $reply_markup = null )
 	{
 		$res =  $this->exec('sendLocation',[
-			'chat_id'=>($chat_id == null) ? $this->result->chat->id : $chat_id , 
+			'chat_id'=>$this->getChatId($chat_id) , 
 			'latitude'  => $latitude,
 			'longitude' =>$longitude,
 			'reply_to_message_id'=>$reply_to_message_id,
@@ -333,7 +336,7 @@ class Telegram{
 	public function sendDocument( $document ,$chat_id = null , $reply_to_message_id = null , $reply_markup = null )
 	{		
 		$res =  $this->exec('sendDocument',[
-			'chat_id'=>($chat_id == null) ? $this->result->chat->id : $chat_id , 
+			'chat_id'=>$this->getChatId($chat_id) , 
 			'document'  =>'@'.$document,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
@@ -345,7 +348,7 @@ class Telegram{
 	public function sendAudio( $audio , $chat_id = null ,$reply_to_message_id = null , $reply_markup = null )
 	{		
 		$res =  $this->exec('sendAudio',[
-			'chat_id'=>($chat_id == null) ? $this->result->chat->id : $chat_id ,  
+			'chat_id'=>$this->getChatId($chat_id) ,  
 			'audio'  =>'@'.$audio,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
@@ -357,7 +360,7 @@ class Telegram{
 	public function sendChatAction( $action , $chat_id = null )
 	{
 		$res =  $this->exec('sendChatAction',[
-			'chat_id' => ($chat_id == null) ? $this->result->chat->id : $chat_id , 
+			'chat_id' => $this->getChatId($chat_id) , 
 			'action'  => $action
 			] );
 
