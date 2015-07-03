@@ -41,8 +41,6 @@ class Telegram{
 	'setWebhook',
 	];
 
-	private $http_client ;
-
 	private $patterns = [
 	':any'=>'.*',
 	':num'=>'[0-9]{0,}',
@@ -72,7 +70,7 @@ class Telegram{
 	* this method check for recived message(command) and then execute the 
 	* command function
 	*/
-	public function run()
+	public function run($sleep = false)
 	{
 
 		$result = $this->getUpdates();
@@ -102,7 +100,7 @@ class Telegram{
 						preg_match('/<<.*>>/', $pattern , $matches);
 
 					// if command has argument
-						if(isset($matches[0]) AND !empty($matches[0])){
+						if(isset($matches[0]) && !empty($matches[0])){
 							$args_pattern = $matches[0];
 						//remove << and >> from patterns
 
@@ -115,16 +113,15 @@ class Telegram{
 
 								if(isset($matches[0])){
 
-								//set args						
+									//set args						
 									$args = array_shift($matches);
 
-								//remove args pattern from main pattern
+									//remove args pattern from main pattern
 									$pattern = str_replace($args_pattern,''	,$pattern);
 
 								}
 							}
 						}
-
 
 						$pattern = '/^'.$pattern.'/i';
 
@@ -139,15 +136,16 @@ class Telegram{
 						}
 
 						$pos++;
+
 					}
 				}catch(Exception $e){
 					echo "\r\n Exception :: ".$e->getMessage();
-
 				}
 			}else{
 				echo "\r\nNo new message\r\n";
 			}
-			// sleep(1);
+			if($sleep !== false)
+				sleep($sleep);
 		}
 	}
 
@@ -293,7 +291,7 @@ class Telegram{
 	{
 		$res =  $this->exec('sendVideo',[
 			'chat_id'=>$chat_id , 
-			'photo'  =>'@'.$video,
+			'video'  =>'@'.$video,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
 			] );
@@ -306,7 +304,7 @@ class Telegram{
 	{		
 		$res =  $this->exec('sendSticker',[
 			'chat_id'=>$chat_id , 
-			'photo'  =>'@'.$sticker,
+			'sticker'  =>'@'.$sticker,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
 			] );
@@ -335,7 +333,7 @@ class Telegram{
 	{		
 		$res =  $this->exec('sendDocument',[
 			'chat_id'=>$chat_id , 
-			'photo'  =>'@'.$document,
+			'document'  =>'@'.$document,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
 			] );
@@ -347,7 +345,7 @@ class Telegram{
 	{		
 		$res =  $this->exec('sendDocument',[
 			'chat_id'=>$chat_id , 
-			'photo'  =>'@'.$audio,
+			'audio'  =>'@'.$audio,
 			'reply_to_message_id'=>$reply_to_message_id,
 			'reply_markup' 		 =>$reply_markup
 			] );

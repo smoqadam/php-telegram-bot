@@ -1,5 +1,5 @@
 <?php
-//require_once 'lib/Telegram.php';
+
 
 require 'vendor/autoload.php';
 
@@ -7,12 +7,12 @@ require 'vendor/autoload.php';
 $tg = new Smoqadam\Telegram('68777318:AAFxwqwuIrW9xZ4pi1bM3QJwrHpf1wOYbgQ');
 
 $tg->cmd('\/name:<<[a-zA-Z]{0,}>>', function ($args) use ($tg){
-		$tg->sendMessage("my username is @".$args);
+		$tg->sendMessage($tg->result->message->chat->id , "my username is @".$args);
 });
 
 
 $tg->cmd('\/number: <<:num>>' , function($args) use($tg){
-	$tg->sendMessage("your number is : ".$args); 
+	$tg->sendMessage($tg->result->message->chat->id , "your number is : ".$args); 
 });
 
 
