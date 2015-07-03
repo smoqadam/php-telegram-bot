@@ -83,7 +83,7 @@ class Telegram{
 				try{
 					$this->result = $result;
 
-				// message recived by user
+					// message recived by user
 					$recived_command  = $this->result->message->text ;
 
 					$args = null;
@@ -91,37 +91,13 @@ class Telegram{
 					$pos = 0;
 					foreach ($this->commands as $pattern) {
 
-					// replace public patterns to regex pattern					
+						// replace public patterns to regex pattern					
 						$searchs  = array_keys($this->patterns);
 						$replaces = array_values($this->patterns);
 						$pattern  = str_replace($searchs, $replaces, $pattern);
 
-					//find args pattern
-						preg_match('/<<.*>>/', $pattern , $matches);
-
-					// if command has argument
-						if(isset($matches[0]) && !empty($matches[0])){
-							$args_pattern = $matches[0];
-						//remove << and >> from patterns
-
-							$tmp_args_pattern = str_replace(['<<','>>'], ['(',')'], $pattern);
-
-						//if args set
-							if(preg_match('/'.$tmp_args_pattern.'/i', $recived_command,$matches)){
-							//remove first element 
-								array_shift($matches);
-
-								if(isset($matches[0])){
-
-									//set args						
-									$args = array_shift($matches);
-
-									//remove args pattern from main pattern
-									$pattern = str_replace($args_pattern,''	,$pattern);
-
-								}
-							}
-						}
+						//find args pattern
+						$args = $this->getArgs($pattern , $recived_command);
 
 						$pattern = '/^'.$pattern.'/i';
 
@@ -150,6 +126,38 @@ class Telegram{
 	}
 
 
+	private function getArgs(&$pattern , $recived_command )
+	{
+		
+		$args = null;
+		// if command has argument
+		if(preg_match('/<<.*>>/', $pattern , $matches) && isset($matches[0]) && !empty($matches[0])){
+		
+			$args_pattern = $matches[0];
+						//remove << and >> from patterns
+
+			$tmp_args_pattern = str_replace(['<<','>>'], ['(',')'], $pattern);
+
+						//if args set
+			if(preg_match('/'.$tmp_args_pattern.'/i', $recived_command,$matches)){
+							//remove first element 
+				array_shift($matches);
+
+				if(isset($matches[0])){
+
+					//set args						
+					$args = array_shift($matches);
+
+					//remove args pattern from main pattern
+					$pattern = str_replace($args_pattern,''	,$pattern);
+
+				}
+			}
+		}
+		return $args;
+	}
+
+	
 	/**
 	* execute Telegram api commands
 	* @para $command String
@@ -214,12 +222,12 @@ class Telegram{
 
    }
 
-	public function getChatId($chat_id = null){
-		if($chat_id)
-			return $chat_id;
-		
-		return $this->result->message->chat->id;	
-	}
+   public function getChatId($chat_id = null){
+   	if($chat_id)
+   		return $chat_id;
+
+   	return $this->result->message->chat->id;	
+   }
 
 	/**
 	* get updates
@@ -247,7 +255,7 @@ class Telegram{
 			'disable_web_page_preview'=>$disable_web_page_preview,
 			'reply_to_message_id' =>$reply_to_message_id,
 			'reply_markup' =>$reply_markup
-		]);
+			]);
 	}
 
 
@@ -383,7 +391,7 @@ class Telegram{
 	{
 		$res =  $this->exec('setWebhook',[
 			'url' => $url 
-		]);
+			]);
 
 		return $res;
 	}
