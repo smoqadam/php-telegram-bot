@@ -77,69 +77,73 @@ class Telegram{
 
 		$result = $this->getUpdates();
 		while(true){
+			
 			$update_id = isset($result->update_id) ? $result->update_id : 1;
 			$result = $this->getUpdates($update_id+1);
-			
+
 			if($result){
+				try{
+					$this->result = $result;
 
-				$this->result = $result;
-				
 				// message recived by user
-				$recived_command  = $this->result->message->text ;
+					$recived_command  = $this->result->message->text ;
 
-				$args = null;
+					$args = null;
 
-				$pos = 0;
-				foreach ($this->commands as $pattern) {
-					
+					$pos = 0;
+					foreach ($this->commands as $pattern) {
+
 					// replace public patterns to regex pattern					
-					$searchs  = array_keys($this->patterns);
-					$replaces = array_values($this->patterns);
-					$pattern  = str_replace($searchs, $replaces, $pattern);
+						$searchs  = array_keys($this->patterns);
+						$replaces = array_values($this->patterns);
+						$pattern  = str_replace($searchs, $replaces, $pattern);
 
 					//find args pattern
-					preg_match('/<<.*>>/', $pattern , $matches);
+						preg_match('/<<.*>>/', $pattern , $matches);
 
 					// if command has argument
-					if(isset($matches[0]) AND !empty($matches[0])){
-						$args_pattern = $matches[0];
+						if(isset($matches[0]) AND !empty($matches[0])){
+							$args_pattern = $matches[0];
 						//remove << and >> from patterns
-						
-						$tmp_args_pattern = str_replace(['<<','>>'], ['(',')'], $pattern);
+
+							$tmp_args_pattern = str_replace(['<<','>>'], ['(',')'], $pattern);
 
 						//if args set
-						if(preg_match('/'.$tmp_args_pattern.'/i', $recived_command,$matches)){
+							if(preg_match('/'.$tmp_args_pattern.'/i', $recived_command,$matches)){
 							//remove first element 
-							array_shift($matches);
+								array_shift($matches);
 
-							if(isset($matches[0])){
+								if(isset($matches[0])){
 
 								//set args						
-								$args = array_shift($matches);
+									$args = array_shift($matches);
 
 								//remove args pattern from main pattern
-								$pattern = str_replace($args_pattern,''	,$pattern);
+									$pattern = str_replace($args_pattern,''	,$pattern);
 
+								}
 							}
 						}
+
+
+						$pattern = '/^'.$pattern.'/i';
+
+						preg_match($pattern, $recived_command , $matches);
+
+						if(isset($matches[0])){
+
+							$func = $this->callbacks[$pos];
+
+							call_user_func($func, $args);
+
+						}
+
+						$pos++;
 					}
+				}catch(Exception $e){
+					echo "\r\n Exception :: ".$e->getMessage();
 
-
-					$pattern = '/^'.$pattern.'/i';
-
-					preg_match($pattern, $recived_command , $matches);
-					
-					if(isset($matches[0])){
-
-						$func = $this->callbacks[$pos];
-
-						call_user_func($func, $args);
-
-					}
-
-					$pos++;
 				}
-
 			}else{
 				echo "\r\nNo new message\r\n";
 			}
@@ -163,20 +167,18 @@ class Telegram{
 			$output = json_decode($this->curl_get_contents($this->api.'/'.$command , $params),true);
 
 			$result = [] ;
-			print_r($output);
-			if($output['ok']){ 
 
+			if($output['ok']){ 
 
 				// remove unwanted array elements
 				$output = end($output);
-				$result = end($output);
+
+				$result = is_array($output) ? end($output) : $output ;
 
 				if(!empty($result))
 				{
-
 					// convert to object 
 					return json_decode(json_encode($result));
-
 				}
 			}	
 
@@ -355,10 +357,10 @@ class Telegram{
 
 	public function sendChatAction($chat_id , $action)
 	{
- 		$res =  $this->exec('sendChatAction',[
+		$res =  $this->exec('sendChatAction',[
 			'chat_id' => $chat_id , 
 			'action'  => $action
-		] );
+			] );
 
 		return $res;	
 	}
@@ -366,18 +368,22 @@ class Telegram{
 
 	public function getUserProfilePhotos($user_id , $offset = null , $limit = null )
 	{
- 		$res =  $this->exec('getUserProfilePhotos',[
+		$res =  $this->exec('getUserProfilePhotos',[
 			'user_id' => $user_id , 
 			'offset'  => $offset  ,
 			'limit'   => $limit   
-		] );
+			] );
 
-		return $re
+		return $res;
 	}
 
-	public function setWebhook($test)
+	public function setWebhook($url)
 	{
-		// as soons as possible
+		$res =  $this->exec('setWebhook',[
+			'url' => $url 
+		]);
+
+		return $res;
 	}
 
 
