@@ -5,6 +5,18 @@ namespace Smoqadam;
 
 class Telegram{
 
+
+
+	const ACTION_TYPING = 'typing';
+	const ACTION_UPLOAD_PHOTO = 'upload_photo';
+	const ACTION_RECORD_VIDEO = 'record_video';
+	const ACTION_UPLOAD_VIDEO = 'upload_video';
+	const ACTION_RECORD_AUDIO = 'record_audio';
+	const ACTION_UPLOAD_AUDIO = 'upload_audio';
+	const ACTION_UPLOAD_DOC = 'upload_document';
+	const ACTION_FIND_LOCATION = 'find_location';
+
+
 	public  $api = 'https://api.telegram.org/bot';
 
 	public $result ;
@@ -14,31 +26,31 @@ class Telegram{
 	private $callbacks = [];
 
 	private $available_commands = [
-		'getMe',
-		'sendMessage',
-		'forwardMessage',
-		'sendPhoto',
-		'sendAudio',
-		'sendDocument',
-		'sendSticker',
-		'sendVideo',
-		'sendLocation',
-		'sendChatAction',
-		'getUserProfilePhotos',
-		'getUpdates',
-		'setWebhook',
+	'getMe',
+	'sendMessage',
+	'forwardMessage',
+	'sendPhoto',
+	'sendAudio',
+	'sendDocument',
+	'sendSticker',
+	'sendVideo',
+	'sendLocation',
+	'sendChatAction',
+	'getUserProfilePhotos',
+	'getUpdates',
+	'setWebhook',
 	];
 
 	private $http_client ;
 
 	private $patterns = [
-		':any'=>'.*',
-		':num'=>'[0-9]{0,}',
-		':str'=>'[a-zA-z]{0,}',
+	':any'=>'.*',
+	':num'=>'[0-9]{0,}',
+	':str'=>'[a-zA-z]{0,}',
 	];
 
 	public function __construct($token){
-	
+
 		$this->api .= $token;
 
 	}
@@ -76,7 +88,7 @@ class Telegram{
 				$recived_command  = $this->result->message->text ;
 
 				$args = null;
-	
+
 				$pos = 0;
 				foreach ($this->commands as $pattern) {
 					
@@ -104,7 +116,7 @@ class Telegram{
 
 								//set args						
 								$args = array_shift($matches);
-				
+
 								//remove args pattern from main pattern
 								$pattern = str_replace($args_pattern,''	,$pattern);
 
@@ -158,7 +170,7 @@ class Telegram{
 				// remove unwanted array elements
 				$output = end($output);
 				$result = end($output);
-			
+
 				if(!empty($result))
 				{
 
@@ -180,30 +192,30 @@ class Telegram{
    /**
     *  get telegram api content with curl
     */
-	private function curl_get_contents($url , $params )
-	{
+   private function curl_get_contents($url , $params )
+   {
 
-		$ch = curl_init();
+   	$ch = curl_init();
 
-		curl_setopt($ch, CURLOPT_URL, $url);
+   	curl_setopt($ch, CURLOPT_URL, $url);
 
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-		
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);	
+   	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
-		curl_setopt($ch, CURLOPT_POST, count($params));
+   	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
 
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+   	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);	
 
-		$result = curl_exec($ch);
+   	curl_setopt($ch, CURLOPT_POST, count($params));
 
-		curl_close($ch);
-	
-		return $result;
-		
-	}
+   	curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+
+   	$result = curl_exec($ch);
+
+   	curl_close($ch);
+
+   	return $result;
+
+   }
 
 
 	/**
@@ -224,11 +236,14 @@ class Telegram{
 	* send message
 	* @param String 
 	*/
-	public function sendMessage( $text)	
+	public function sendMessage( $chat_id , $text , $disable_web_page_preview = false , $reply_to_message_id = null , $reply_markup = null)	
 	{
 		return $this->exec('sendMessage',[
-			'chat_id'=>$this->result->message->chat->id,
-			'text'=>$text
+			'chat_id'=>$chat_id,
+			'text'=>$text , 
+			'disable_web_page_preview'=>$disable_web_page_preview,
+			'reply_to_message_id' =>$reply_to_message_id,
+			'reply_markup' =>$reply_markup
 			]);
 	}
 
@@ -256,12 +271,14 @@ class Telegram{
 	}
 
 
-	public function sendPhoto($chat_id , $photo)
+	public function sendPhoto($chat_id , $photo , $caption = null , $reply_to_message_id = null , $reply_markup = null)
 	{
 
 		$res =  $this->exec('sendPhoto',[
-				'chat_id'=>$chat_id , 
-				'photo'  =>'@'.$photo
+			'chat_id'			 =>$chat_id , 
+			'photo'  			 =>'@'.$photo ,
+			'reply_to_message_id'=>$reply_to_message_id,
+			'reply_markup' 		 =>$reply_markup
 			] );
 
 		return $res;
@@ -270,22 +287,26 @@ class Telegram{
 
 
 
-	public function sendVideo($doc)
+	public function sendVideo($chat_id , $video , $reply_to_message_id = null , $reply_markup = null )
 	{
-		$res =  $this->exec('sendDocument',[
-				'chat_id'=>$chat_id , 
-				'photo'  =>'@'.$doc
+		$res =  $this->exec('sendVideo',[
+			'chat_id'=>$chat_id , 
+			'photo'  =>'@'.$video,
+			'reply_to_message_id'=>$reply_to_message_id,
+			'reply_markup' 		 =>$reply_markup
 			] );
 
 		return $res;	
 	}
 
 
-	public function sendSticker($chat_id , $file)
+	public function sendSticker($chat_id , $sticker , $reply_to_message_id = null , $reply_markup = null )
 	{		
 		$res =  $this->exec('sendSticker',[
-				'chat_id'=>$chat_id , 
-				'photo'  =>'@'.$file
+			'chat_id'=>$chat_id , 
+			'photo'  =>'@'.$sticker,
+			'reply_to_message_id'=>$reply_to_message_id,
+			'reply_markup' 		 =>$reply_markup
 			] );
 
 		return $res;	
@@ -294,32 +315,64 @@ class Telegram{
 
 
 
-	public function sendLocation($test)
+	public function sendLocation($chat_id , $latitude , $longitude , $reply_to_message_id = null , $reply_markup = null )
 	{
-		// as soons as possible
+		$res =  $this->exec('sendLocation',[
+			'chat_id'=>$chat_id , 
+			'latitude'  => $latitude,
+			'longitude' =>$longitude,
+			'reply_to_message_id'=>$reply_to_message_id,
+			'reply_markup' 		 =>$reply_markup
+			] );
+
+		return $res;	
 	}
 
 
-	public function sendDocument($test)
+	public function sendDocument($chat_id , $document , $reply_to_message_id = null , $reply_markup = null )
+	{		
+		$res =  $this->exec('sendDocument',[
+			'chat_id'=>$chat_id , 
+			'photo'  =>'@'.$document,
+			'reply_to_message_id'=>$reply_to_message_id,
+			'reply_markup' 		 =>$reply_markup
+			] );
+
+		return $res;	
+	}
+
+	public function sendAudio($chat_id , $audio , $reply_to_message_id = null , $reply_markup = null )
+	{		
+		$res =  $this->exec('sendDocument',[
+			'chat_id'=>$chat_id , 
+			'photo'  =>'@'.$audio,
+			'reply_to_message_id'=>$reply_to_message_id,
+			'reply_markup' 		 =>$reply_markup
+			] );
+
+		return $res;	
+	}
+
+	public function sendChatAction($chat_id , $action)
 	{
-		// as soons as possible
+ 		$res =  $this->exec('sendChatAction',[
+			'chat_id' => $chat_id , 
+			'action'  => $action
+		] );
+
+		return $res;	
 	}
 
 
-	public function sendAudio($test)
+	public function getUserProfilePhotos($user_id , $offset = null , $limit = null )
 	{
-		// as soons as possible
-	}
+ 		$res =  $this->exec('getUserProfilePhotos',[
+			'user_id' => $user_id , 
+			'offset'  => $offset  ,
+			'limit'   => $limit   
+		] );
 
-	public function sendChatAction($test)
-	{
-		// as soons as possible
-	}
-
-
-	public function getUserProfilePhotos($test)
-	{
-		// as soons as possible
+		return $re
 	}
 
 	public function setWebhook($test)
