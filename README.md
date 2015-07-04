@@ -1,7 +1,7 @@
 # php-telegram-bot
-a wrapper class for telegram bot api
+###a wrapper class for telegram bot api
 
-#this class has not been compeleted yet!!
+##this class has not been completed yet!!
 
 ## install 
 create composer.json :
