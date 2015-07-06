@@ -52,3 +52,6 @@ $tg->run();
 now when you send `/number 123` in telegram bot page , bot will answer to you `your number is 123`
 
 you can set argument in regex between << and >> 
+
+## running bot
+`$ php index.php`
