@@ -1,8 +1,8 @@
 <?php
 /**
  * A wrapper class for telegram bot api
- * you can find source code in https://github.com/smoqadam/php-telegram-bot
  * 
+ * @home page : https://github.com/smoqadam/php-telegram-bot
  * @author : Saeed Moqadam <phpro.ir@gmail.com>
  * @licence : MIT Licence
  *
@@ -76,7 +76,7 @@ class Telegram
 
     /**
      *
-     * @param $token Telegram api token , taken by botfather
+     * @param String $token Telegram api token , taken by botfather
      */
     public function __construct($token)
     {
@@ -88,8 +88,8 @@ class Telegram
 
     /**
      * add new command to the bot
-     * @param $cmd String
-     * @param $func Closure
+     * @param String $cmd
+     * @param \Closure $func
      */
     public function cmd($cmd, $func)
     {
@@ -113,7 +113,31 @@ class Telegram
             $update_id = isset($result->update_id) ? $result->update_id : 1;
             $result = $this->getUpdates($update_id + 1);
 
-            if ($result) {
+            $this->processMessage($result);
+            
+            if ($sleep !== false)
+                sleep($sleep);
+        }
+    }
+
+	/**
+	* this method used for setWebhook sended message
+	*/
+    public function process($message)
+    {
+    		$result = $this->convertToObject($message, true);
+
+            $update_id = isset($result->update_id) ? $result->update_id : 1;
+
+            return $this->processMessage($result);
+
+            
+    }
+
+
+    private function processMessage($result)
+    {
+    	if ($result) {
                 try {
                     $this->result = $result;
 
@@ -154,12 +178,7 @@ class Telegram
             } else {
                 echo "\r\nNo new message\r\n";
             }
-            if ($sleep !== false)
-                sleep($sleep);
-        }
     }
-
-
     /**
      * get arguments part in regex
      * @param $pattern
@@ -210,19 +229,8 @@ class Telegram
 
             // convert json to array then get the last messages info
             $output = json_decode($this->curl_get_contents($this->api . '/' . $command, $params), true);
+        	return $this->convertToObject($output);
 
-            if ($output['ok']) {
-
-                // remove unwanted array elements
-                $output = end($output);
-
-                $result = is_array($output) ? end($output) : $output;
-
-                if (!empty($result)) {
-                    // convert to object
-                    return json_decode(json_encode($result));
-                }
-            }
 
         } else {
 
@@ -231,6 +239,43 @@ class Telegram
         }
     }
 
+
+    private function convertToObject($jsonObject , $webhook = false)
+    {
+        
+        if(!$webhook){
+          if ($jsonObject['ok']) {
+
+                // remove unwanted array elements
+                $output = end($jsonObject);
+
+                $result = is_array($output) ? end($output) : $output;
+
+                if (!empty($result)) {
+                    // convert to object
+                    return json_decode(json_encode($result));
+                }
+            }
+            
+        }else{
+            if ($jsonObject['message']) {
+
+                    return json_decode(json_encode($jsonObject)); 
+                // remove unwanted array elements
+                $output = end($jsonObject);
+
+                $result = is_array($output) ? end($output) : $output;
+
+                if (!empty($result)) {
+                    // convert to object
+                    print_r($result);
+                    return json_decode(json_encode($result));
+                }
+            }
+        }
+            
+            
+    }
 
     /**
      * get the $url content with CURL
@@ -301,6 +346,8 @@ class Telegram
      */
     public function sendMessage($text, $chat_id, $disable_web_page_preview = false, $reply_to_message_id = null, $reply_markup = null)
     {
+
+        $this->sendChatAction(self::ACTION_TYPING,$chat_id);
         return $this->exec('sendMessage', [
             'chat_id' => $this->getChatId($chat_id),
             'text' => $text,
