@@ -1,5 +1,7 @@
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/smoqadam/php-telegram-bot/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/smoqadam/php-telegram-bot/?branch=master)
+[![Codacy Badge](https://www.codacy.com/project/badge/7008dc0d211c4bba95e5b31537702050)](https://www.codacy.com/app/phpro-ir/php-telegram-bot)
 # php-telegram-bot
-###a wrapper class for telegram bot api
+a wrapper class for telegram bot api
 
 ##this class has not been completed yet!!
 
@@ -85,3 +87,6 @@ $tg->process(json_decode($message, true));
 now when you send `/number 123` in telegram bot page , bot will answer to you `your number is 123`
 
 you can set argument in regex between << and >> 
+
+## running bot
+`$ php index.php`
