@@ -11,14 +11,17 @@ namespace Smoqadam;
 
 class Telegram {
 
-    const ACTION_TYPING         = 'typing';
-    const ACTION_UPLOAD_PHOTO   = 'upload_photo';
-    const ACTION_RECORD_VIDEO   = 'record_video';
-    const ACTION_UPLOAD_VIDEO   = 'upload_video';
-    const ACTION_RECORD_AUDIO   = 'record_audio';
-    const ACTION_UPLOAD_AUDIO   = 'upload_audio';
-    const ACTION_UPLOAD_DOC     = 'upload_document';
-    const ACTION_FIND_LOCATION  = 'find_location';
+  const PARSE_MARKDOWN = 'Markdown';
+  const PARSE_HTML     = 'HTML';
+
+  const ACTION_TYPING         = 'typing';
+  const ACTION_UPLOAD_PHOTO   = 'upload_photo';
+  const ACTION_RECORD_VIDEO   = 'record_video';
+  const ACTION_UPLOAD_VIDEO   = 'upload_video';
+  const ACTION_RECORD_AUDIO   = 'record_audio';
+  const ACTION_UPLOAD_AUDIO   = 'upload_audio';
+  const ACTION_UPLOAD_DOC     = 'upload_document';
+  const ACTION_FIND_LOCATION  = 'find_location';
 
     public $api = 'https://api.telegram.org/bot';
 
@@ -36,13 +39,19 @@ class Telegram {
     public $state;
 
     /**
-     * commands in regex
+     * commands in regex and callback
      * @var array
      */
     private $commands = [];
 
     /**
-     * callbacks for commands
+     * InlineQuery in regex and callback
+     * @var array
+     */
+    private $inlines = [];
+
+    /**
+     * callbacks
      * @var array
      */
     private $callbacks = [];
@@ -63,6 +72,7 @@ class Telegram {
         'sendLocation',
         'sendChatAction',
         'getUserProfilePhotos',
+        'answerInlineQuery',
         'getUpdates',
         'setWebhook',
     ];
@@ -91,24 +101,31 @@ class Telegram {
      * @param \Closure $func
      */
     public function cmd($cmd, $func) {
-        $this->commands[] = $cmd;
-        $this->callbacks[] = $func;
+      $this->commands[] = new Trigger($cmd, $func);
     }
 
     /**
-     * this method check for recived message(command) and then execute the
-     * command function
+     * add new InlineQuery to the bot
+     * @param String $cmd
+     * @param \Closure $func
+     */
+    public function inlineQuery($cmd, $func) {
+      $this->inlines[] = new Trigger($cmd, $func);
+    }
+
+    /**
+     * this method check for recived payload(command, inlinequery and so on) and
+     * then execute the correct function
      *
      * @param bool $sleep
      */
     public function run($sleep = false) {
         $result = $this->getUpdates();
         while (true) {
-
             $update_id = isset($result->update_id) ? $result->update_id : 1;
             $result = $this->getUpdates($update_id + 1);
 
-            $this->processMessage($result);
+            $this->processPayload($result);
 
             if ($sleep !== false)
                 sleep($sleep);
@@ -116,49 +133,53 @@ class Telegram {
     }
 
 	/**
-	* this method used for setWebhook sended message
+	* this method used for setWebhook sended payload
 	*/
-    public function process($message) {
-    	$result = $this->convertToObject($message, true);
+    public function process($payload) {
+    	$result = $this->convertToObject($payload, true);
 
-        $update_id = isset($result->update_id) ? $result->update_id : 1;
-
-        return $this->processMessage($result);
+      return $this->processPayload($result);
     }
 
-    private function processMessage($result) {
+    private function processPayload($result) {
     	if ($result) {
             try {
                 $this->result = $result;
 
-                // message recived by user
-                $recived_command = $this->result->message->text;
+                // now i select the right triggers for payload received by user
+                if( isset($this->result->message) ) {
+                  $payload = $this->result->message->text;
+                  $triggers = $this->commands;
+                } elseif ( isset($this->result->inline_query) ) {
+                  $payload = $this->result->inline_query->query;
+                  $triggers = $this->inlines;
+                } else {
+                  throw new \Exception("Error Processing Request", 1);
+                }
 
                 $args = null;
 
-                $pos = 0;
-                foreach ($this->commands as $pattern) {
-
+                foreach ($triggers as &$trigger) {
                     // replace public patterns to regex pattern
                     $searchs = array_keys($this->patterns);
                     $replaces = array_values($this->patterns);
-                    $pattern = str_replace($searchs, $replaces, $pattern);
+                    $pattern = str_replace($searchs, $replaces, $trigger->pattern);
 
                     //find args pattern
-                    $args = $this->getArgs($pattern, $recived_command);
+                    $args = $this->getArgs($pattern, $payload);
 
                     $pattern = '/^' . $pattern . '/i';
 
-                    preg_match($pattern, $recived_command, $matches);
+                    preg_match($pattern, $payload, $matches);
 
                     if (isset($matches[0])) {
-                        $func = $this->callbacks[$pos];
+                        $func = $trigger->callback;
                         call_user_func($func, $args);
                     }
-                    $pos++;
                 }
             } catch (\Exception $e) {
-                echo "\r\n Exception :: " . $e->getMessage();
+              error_log($e->getMessage());
+              echo "\r\n Exception :: " . $e->getMessage();
             }
         } else {
             echo "\r\nNo new message\r\n";
@@ -168,10 +189,10 @@ class Telegram {
     /**
      * get arguments part in regex
      * @param $pattern
-     * @param $recived_command
+     * @param $payload
      * @return mixed|null
      */
-    private function getArgs(&$pattern, $recived_command) {
+    private function getArgs(&$pattern, $payload) {
         $args = null;
         // if command has argument
         if (preg_match('/<<.*>>/', $pattern, $matches)) {
@@ -181,7 +202,7 @@ class Telegram {
             $tmp_args_pattern = str_replace(['<<', '>>'], ['(', ')'], $pattern);
 
             //if args set
-            if (preg_match('/' . $tmp_args_pattern . '/i', $recived_command, $matches)) {
+            if (preg_match('/' . $tmp_args_pattern . '/i', $payload, $matches)) {
                 //remove first element
                 array_shift($matches);
                 if (isset($matches[0])) {
@@ -203,8 +224,9 @@ class Telegram {
      */
     private function exec($command, $params = []) {
         if (in_array($command, $this->available_commands)) {
-            // convert json to array then get the last messages info
-            $output = json_decode($this->curl_get_contents($this->api . '/' . $command, $params), true);
+          // convert json to array then get the last messages info
+          $output = json_decode($this->curl_get_contents($this->api . '/' . $command, $params), true);
+
         	return $this->convertToObject($output);
         } else {
             echo 'command not found';
@@ -212,32 +234,22 @@ class Telegram {
     }
 
     private function convertToObject($jsonObject , $webhook = false) {
-        if( ! $webhook) {
-          if ($jsonObject['ok']) {
+      if( ! $webhook) {
+        if ($jsonObject['ok']) {
+          //error_log(print_r($jsonObject, true));
 
-                // remove unwanted array elements
-                $output = end($jsonObject);
+          // remove unwanted array elements
+          $output = end($jsonObject);
 
-                $result = is_array($output) ? end($output) : $output;
-                if (!empty($result)) {
-                    // convert to object
-                    return json_decode(json_encode($result));
-                }
-            }
-        }else{
-            if ($jsonObject['message']) {
-                return json_decode(json_encode($jsonObject));
-                // remove unwanted array elements
-                $output = end($jsonObject);
-
-                $result = is_array($output) ? end($output) : $output;
-                if ( ! empty($result)) {
-                    // convert to object
-                    print_r($result);
-                    return json_decode(json_encode($result));
-                }
-            }
+          $result = is_array($output) ? end($output) : $output;
+          if ( ! empty($result)) {
+              // convert to object
+              return json_decode(json_encode($result));
+          }
         }
+      } else {
+        return json_decode(json_encode($jsonObject));
+      }
     }
 
     /**
@@ -269,10 +281,20 @@ class Telegram {
      * @return int
      */
     public function getChatId($chat_id = null) {
+      try {
         if ($chat_id)
-            return $chat_id;
+          return $chat_id;
 
-        return $this->result->message->chat->id;
+        if( isset($this->result->message) ) {
+          return $this->result->message->chat->id;
+        } elseif ( isset($this->result->inline_query) ) {
+          return $this->result->inline_query->from->id;
+        } else {
+          throw new \Exception("Error Processing Request", 1);
+        }
+      } catch (\Exception $e) {
+        error_log($e->getMessage());
+      }
     }
 
     /**
@@ -456,6 +478,21 @@ class Telegram {
         ]);
 
         return $res;
+    }
+
+
+    public function answerInlineQuery($inline_query_id, $results, $cache_time = 0, $is_personal = false, $next_offset = '', $switch_pm_text = '', $switch_pm_parameter = '') {
+      $res = $this->exec('answerInlineQuery', [
+        'inline_query_id' => $inline_query_id,
+        'results' => json_encode($results),
+        'cache_time' => $cache_time,
+        'is_personal' => $is_personal,
+        'next_offset' => $next_offset,
+        'switch_pm_text' => $switch_pm_text,
+        'switch_pm_parameter' => $switch_pm_parameter
+      ]);
+
+      return $res;
     }
 
     /**
