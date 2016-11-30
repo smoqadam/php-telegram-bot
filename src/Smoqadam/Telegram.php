@@ -114,7 +114,7 @@ class Telegram {
     }
 
     /**
-     * this method check for recived payload(command, inlinequery and so on) and
+     * this method check for received payload(command, inlinequery and so on) and
      * then execute the correct function
      *
      * @param bool $sleep
@@ -146,8 +146,8 @@ class Telegram {
             try {
                 $this->result = $result;
 
-                // now i select the right triggers for payload received by user
-                if( isset($this->result->message) ) {
+                // now i select the right triggers for payload received by Telegram
+                if( isset($this->result->message->text) ) {
                   $payload = $this->result->message->text;
                   $triggers = $this->commands;
                 } elseif ( isset($this->result->inline_query) ) {
