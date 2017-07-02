@@ -1,6 +1,6 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/smoqadam/php-telegram-bot/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/smoqadam/php-telegram-bot/?branch=master)
 [![Codacy Badge](https://www.codacy.com/project/badge/7008dc0d211c4bba95e5b31537702050)](https://www.codacy.com/app/phpro-ir/php-telegram-bot)
-# php-telegram-bot (WIP)
+# php-telegram-bot
 A wrapper class for Telegram Bot API
 
 ## Install
