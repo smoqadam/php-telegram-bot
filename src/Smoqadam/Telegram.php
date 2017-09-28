@@ -317,12 +317,14 @@ class Telegram {
      * @param bool $disable_web_page_preview
      * @param null $reply_to_message_id
      * @param null $reply_markup
+     * @param null $parse_mode
      */
-    public function sendMessage($text, $chat_id = null, $disable_web_page_preview = false, $reply_to_message_id = null, $reply_markup = null) {
+    public function sendMessage($text, $chat_id = null, $disable_web_page_preview = false, $reply_to_message_id = null, $reply_markup = null, $parse_mode = null) {
         $this->sendChatAction(self::ACTION_TYPING, $chat_id);
         return $this->exec('sendMessage', [
             'chat_id' => $this->getChatId($chat_id),
             'text' => $text,
+            'parse_mode' => $parse_mode,
             'disable_web_page_preview' => $disable_web_page_preview,
             'reply_to_message_id' => $reply_to_message_id,
             'reply_markup' => $reply_markup
