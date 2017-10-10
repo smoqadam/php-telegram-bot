@@ -11,17 +11,17 @@ namespace Smoqadam;
 
 class Telegram {
 
-  const PARSE_MARKDOWN = 'Markdown';
-  const PARSE_HTML     = 'HTML';
+    const PARSE_MARKDOWN = 'Markdown';
+    const PARSE_HTML     = 'HTML';
 
-  const ACTION_TYPING         = 'typing';
-  const ACTION_UPLOAD_PHOTO   = 'upload_photo';
-  const ACTION_RECORD_VIDEO   = 'record_video';
-  const ACTION_UPLOAD_VIDEO   = 'upload_video';
-  const ACTION_RECORD_AUDIO   = 'record_audio';
-  const ACTION_UPLOAD_AUDIO   = 'upload_audio';
-  const ACTION_UPLOAD_DOC     = 'upload_document';
-  const ACTION_FIND_LOCATION  = 'find_location';
+    const ACTION_TYPING         = 'typing';
+    const ACTION_UPLOAD_PHOTO   = 'upload_photo';
+    const ACTION_RECORD_VIDEO   = 'record_video';
+    const ACTION_UPLOAD_VIDEO   = 'upload_video';
+    const ACTION_RECORD_AUDIO   = 'record_audio';
+    const ACTION_UPLOAD_AUDIO   = 'upload_audio';
+    const ACTION_UPLOAD_DOC     = 'upload_document';
+    const ACTION_FIND_LOCATION  = 'find_location';
 
     public $api = 'https://api.telegram.org/bot';
 
@@ -31,8 +31,8 @@ class Telegram {
      */
     public $result;
 
-     /**
-      * @name State of bot
+    /**
+     * @name State of bot
      * state of bot
      * @var object
      */
@@ -101,7 +101,26 @@ class Telegram {
      * @param \Closure $func
      */
     public function cmd($cmd, $func) {
-      $this->commands[] = new Trigger($cmd, $func);
+        $this->commands[] = new Trigger($cmd, $func);
+    }
+
+
+    public function PDO(){
+
+        $servername ='YOUR_SERVER_NAME';
+        $username = 'YOUR_USERNAME';
+        $password ='YOUR_PASSWORD';
+        $dbname = 'YOUR_DATABASE_NAME';
+        try {
+            $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password, [PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"]);
+            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            return $conn;
+        }
+        catch(PDOException $e)
+        {
+            return $e->getMessage();
+        }
     }
 
     /**
@@ -110,7 +129,7 @@ class Telegram {
      * @param \Closure $func
      */
     public function inlineQuery($cmd, $func) {
-      $this->inlines[] = new Trigger($cmd, $func);
+        $this->inlines[] = new Trigger($cmd, $func);
     }
 
     /**
@@ -132,29 +151,29 @@ class Telegram {
         }
     }
 
-	/**
-	* this method used for setWebhook sended payload
-	*/
+    /**
+     * this method used for setWebhook sended payload
+     */
     public function process($payload) {
-    	$result = $this->convertToObject($payload, true);
+        $result = $this->convertToObject($payload, true);
 
-      return $this->processPayload($result);
+        return $this->processPayload($result);
     }
 
     private function processPayload($result) {
-    	if ($result) {
+        if ($result) {
             try {
                 $this->result = $result;
 
                 // now i select the right triggers for payload received by Telegram
                 if( isset($this->result->message->text) ) {
-                  $payload = $this->result->message->text;
-                  $triggers = $this->commands;
+                    $payload = $this->result->message->text;
+                    $triggers = $this->commands;
                 } elseif ( isset($this->result->inline_query) ) {
-                  $payload = $this->result->inline_query->query;
-                  $triggers = $this->inlines;
+                    $payload = $this->result->inline_query->query;
+                    $triggers = $this->inlines;
                 } else {
-                  throw new \Exception("Error Processing Request", 1);
+                    throw new \Exception("Error Processing Request", 1);
                 }
 
                 $args = null;
@@ -174,12 +193,12 @@ class Telegram {
 
                     if (isset($matches[0])) {
                         $func = $trigger->callback;
-                        call_user_func($func, $args);
+                        return call_user_func($func, $args);
                     }
                 }
             } catch (\Exception $e) {
-              error_log($e->getMessage());
-              echo "\r\n Exception :: " . $e->getMessage();
+                error_log($e->getMessage());
+                echo "\r\n Exception :: " . $e->getMessage();
             }
         } else {
             echo "\r\nNo new message\r\n";
@@ -224,32 +243,32 @@ class Telegram {
      */
     private function exec($command, $params = []) {
         if (in_array($command, $this->available_commands)) {
-          // convert json to array then get the last messages info
-          $output = json_decode($this->curl_get_contents($this->api . '/' . $command, $params), true);
+            // convert json to array then get the last messages info
+            $output = json_decode($this->curl_get_contents($this->api . '/' . $command, $params), true);
 
-        	return $this->convertToObject($output);
+            return $this->convertToObject($output);
         } else {
             echo 'command not found';
         }
     }
 
     private function convertToObject($jsonObject , $webhook = false) {
-      if( ! $webhook) {
-        if ($jsonObject['ok']) {
-          //error_log(print_r($jsonObject, true));
+        if( ! $webhook) {
+            if ($jsonObject['ok']) {
+                //error_log(print_r($jsonObject, true));
 
-          // remove unwanted array elements
-          $output = end($jsonObject);
+                // remove unwanted array elements
+                $output = end($jsonObject);
 
-          $result = is_array($output) ? end($output) : $output;
-          if ( ! empty($result)) {
-              // convert to object
-              return json_decode(json_encode($result));
-          }
+                $result = is_array($output) ? end($output) : $output;
+                if ( ! empty($result)) {
+                    // convert to object
+                    return json_decode(json_encode($result));
+                }
+            }
+        } else {
+            return json_decode(json_encode($jsonObject));
         }
-      } else {
-        return json_decode(json_encode($jsonObject));
-      }
     }
 
     /**
@@ -281,20 +300,20 @@ class Telegram {
      * @return int
      */
     public function getChatId($chat_id = null) {
-      try {
-        if ($chat_id)
-          return $chat_id;
+        try {
+            if ($chat_id)
+                return $chat_id;
 
-        if( isset($this->result->message) ) {
-          return $this->result->message->chat->id;
-        } elseif ( isset($this->result->inline_query) ) {
-          return $this->result->inline_query->from->id;
-        } else {
-          throw new \Exception("Error Processing Request", 1);
+            if( isset($this->result->message) ) {
+                return $this->result->message->chat->id;
+            } elseif ( isset($this->result->inline_query) ) {
+                return $this->result->inline_query->from->id;
+            } else {
+                throw new \Exception("Error Processing Request", 1);
+            }
+        } catch (\Exception $e) {
+            error_log($e->getMessage());
         }
-      } catch (\Exception $e) {
-        error_log($e->getMessage());
-      }
     }
 
     /**
@@ -325,7 +344,7 @@ class Telegram {
             'text' => $text,
             'disable_web_page_preview' => $disable_web_page_preview,
             'reply_to_message_id' => $reply_to_message_id,
-            'reply_markup' => $reply_markup
+            'reply_markup' => json_encode($reply_markup)
         ]);
     }
 
@@ -362,7 +381,7 @@ class Telegram {
             'photo' => $photo,
             'caption' => $caption,
             'reply_to_message_id' => $reply_to_message_id,
-            'reply_markup' => $reply_markup
+            'reply_markup' => json_encode($reply_markup)
         ]);
 
         return $res;
@@ -379,7 +398,7 @@ class Telegram {
             'chat_id' => $this->getChatId($chat_id),
             'video' => $video,
             'reply_to_message_id' => $reply_to_message_id,
-            'reply_markup' => $reply_markup
+            'reply_markup' => json_encode($reply_markup)
         ]);
 
         return $res;
@@ -397,7 +416,7 @@ class Telegram {
             'chat_id' => $this->getChatId($chat_id),
             'sticker' => $sticker,
             'reply_to_message_id' => $reply_to_message_id,
-            'reply_markup' => $reply_markup
+            'reply_markup' => json_encode($reply_markup)
         ]);
 
         return $res;
@@ -417,7 +436,7 @@ class Telegram {
             'latitude' => $latitude,
             'longitude' => $longitude,
             'reply_to_message_id' => $reply_to_message_id,
-            'reply_markup' => $reply_markup
+            'reply_markup' => json_encode($reply_markup)
         ]);
 
         return $res;
@@ -434,7 +453,7 @@ class Telegram {
             'chat_id' => $this->getChatId($chat_id),
             'document' => $document,
             'reply_to_message_id' => $reply_to_message_id,
-            'reply_markup' => $reply_markup
+            'reply_markup' => json_encode($reply_markup)
         ]);
 
         return $res;
@@ -445,7 +464,7 @@ class Telegram {
             'chat_id' => $this->getChatId($chat_id),
             'audio' => $audio,
             'reply_to_message_id' => $reply_to_message_id,
-            'reply_markup' => $reply_markup
+            'reply_markup' => json_encode($reply_markup)
         ]);
 
         return $res;
@@ -482,17 +501,17 @@ class Telegram {
 
 
     public function answerInlineQuery($inline_query_id, $results, $cache_time = 0, $is_personal = false, $next_offset = '', $switch_pm_text = '', $switch_pm_parameter = '') {
-      $res = $this->exec('answerInlineQuery', [
-        'inline_query_id' => $inline_query_id,
-        'results' => json_encode($results),
-        'cache_time' => $cache_time,
-        'is_personal' => $is_personal,
-        'next_offset' => $next_offset,
-        'switch_pm_text' => $switch_pm_text,
-        'switch_pm_parameter' => $switch_pm_parameter
-      ]);
+        $res = $this->exec('answerInlineQuery', [
+            'inline_query_id' => $inline_query_id,
+            'results' => json_encode($results),
+            'cache_time' => $cache_time,
+            'is_personal' => $is_personal,
+            'next_offset' => $next_offset,
+            'switch_pm_text' => $switch_pm_text,
+            'switch_pm_parameter' => $switch_pm_parameter
+        ]);
 
-      return $res;
+        return $res;
     }
 
     /**
