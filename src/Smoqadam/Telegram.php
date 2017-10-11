@@ -338,12 +338,12 @@ class Telegram {
      * @param null $reply_to_message_id
      * @param null $reply_markup
      */
-    public function sendMessage($text, $chat_id = null, $disable_web_page_preview = false, $reply_to_message_id = null, $reply_markup = null) {
+    public function sendMessage($text, $chat_id = null, $disable_web_page_preview = false, $reply_to_message_id = null, $reply_markup = null, $parse_mode = null) {
         $this->sendChatAction(self::ACTION_TYPING, $chat_id);
         return $this->exec('sendMessage', [
             'chat_id' => $this->getChatId($chat_id),
             'text' => $text,
-            'parse_mode' => 'Markdown',
+            'parse_mode' => $parse_mode,
             'disable_web_page_preview' => $disable_web_page_preview,
             'reply_to_message_id' => $reply_to_message_id,
             'reply_markup' => json_encode($reply_markup)
@@ -377,10 +377,11 @@ class Telegram {
      * @param null $reply_to_message_id
      * @param null $reply_markup
      */
-    public function sendPhoto($photo, $chat_id = null, $caption = null, $reply_to_message_id = null, $reply_markup = null) {
+    public function sendPhoto($photo, $chat_id = null, $caption = null, $reply_to_message_id = null, $reply_markup = null, $parse_mode = null) {
         $res = $this->exec('sendPhoto', [
             'chat_id' => $this->getChatId($chat_id),
             'photo' => $photo,
+            'parse_mode' => $parse_mode,
             'caption' => $caption,
             'reply_to_message_id' => $reply_to_message_id,
             'reply_markup' => json_encode($reply_markup)
@@ -395,10 +396,11 @@ class Telegram {
      * @param null $reply_to_message_id
      * @param null $reply_markup
      */
-    public function sendVideo($video, $chat_id = null, $reply_to_message_id = null, $reply_markup = null) {
+    public function sendVideo($video, $chat_id = null, $reply_to_message_id = null, $reply_markup = null, $parse_mode = null) {
         $res = $this->exec('sendVideo', [
             'chat_id' => $this->getChatId($chat_id),
             'video' => $video,
+            'parse_mode' => $parse_mode,
             'reply_to_message_id' => $reply_to_message_id,
             'reply_markup' => json_encode($reply_markup)
         ]);
