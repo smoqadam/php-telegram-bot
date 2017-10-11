@@ -8,7 +8,7 @@ create composer.json :
 ```
 {
     "require": {
-        "smoqadam/php-telegram-bot": "dev-master"
+        "smoqadam/php-telegram-bot": "v1.0"
     }
 }
 ```
