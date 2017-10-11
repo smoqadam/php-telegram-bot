@@ -8,6 +8,7 @@
  *
  */
 namespace Smoqadam;
+use PDO;
 
 class Telegram {
 
@@ -342,6 +343,7 @@ class Telegram {
         return $this->exec('sendMessage', [
             'chat_id' => $this->getChatId($chat_id),
             'text' => $text,
+            'parse_mode' => 'Markdown',
             'disable_web_page_preview' => $disable_web_page_preview,
             'reply_to_message_id' => $reply_to_message_id,
             'reply_markup' => json_encode($reply_markup)
